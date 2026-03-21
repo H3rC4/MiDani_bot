@@ -2,6 +2,32 @@ import { config } from '../config/env.js';
 import { toolDefinitions } from '../tools/index.js';
 import { Message } from './memory.js';
 
+export async function transcribeAudio(audioBuffer: Buffer, filename: string): Promise<string> {
+  const isGroq = !!config.GROQ_API_KEY && config.GROQ_API_KEY !== 'SUTITUYE POR EL TUYO';
+  if (!isGroq) throw new Error("Se requiere una API Key de Groq para la transcripción de audio.");
+
+  const formData = new FormData();
+  formData.append("file", new Blob([new Uint8Array(audioBuffer)], { type: 'audio/ogg' }), filename);
+  // whisper-large-v3-turbo es super rápido, ideal para bots de voz
+  formData.append("model", "whisper-large-v3-turbo");
+
+  const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${config.GROQ_API_KEY}`
+    },
+    body: formData
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error de Transcripción (${response.status}): ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data.text;
+}
+
 export async function checkLLM(messages: Message[]) {
   const isGroq = !!config.GROQ_API_KEY && config.GROQ_API_KEY !== 'SUTITUYE POR EL TUYO';
   const apiUrl = isGroq ? 'https://api.groq.com/openai/v1/chat/completions' : 'https://openrouter.ai/api/v1/chat/completions';

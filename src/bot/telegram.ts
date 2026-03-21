@@ -3,6 +3,7 @@ import { config } from '../config/env.js';
 import { authMiddleware } from './auth.js';
 import { runAgentLoop } from '../agent/loop.js';
 import { memory } from '../agent/memory.js';
+import { transcribeAudio } from '../agent/llm.js';
 
 if (!config.TELEGRAM_BOT_TOKEN || config.TELEGRAM_BOT_TOKEN === 'SUTITUYE POR EL TUYO') {
   console.error("TELEGRAM_BOT_TOKEN is missing or invalid");
@@ -37,6 +38,40 @@ bot.on("message:text", async (ctx) => {
   } catch (error: any) {
     console.error("Error running agent loop:", error);
     await ctx.reply(`❌ Ocurrió un error en mi procesamiento cognitivo: ${error.message}`);
+  }
+});
+
+bot.on(["message:voice", "message:audio"], async (ctx) => {
+  const userId = ctx.from.id;
+  await ctx.replyWithChatAction("typing");
+
+  try {
+    const fileId = ctx.message.voice ? ctx.message.voice.file_id : ctx.message.audio?.file_id;
+    if (!fileId) return;
+
+    const file = await ctx.api.getFile(fileId);
+    if (!file.file_path) {
+      await ctx.reply("❌ No pude acceder al archivo de audio.");
+      return;
+    }
+
+    const fileUrl = `https://api.telegram.org/file/bot${config.TELEGRAM_BOT_TOKEN}/${file.file_path}`;
+    const response = await fetch(fileUrl);
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Transcribir con Groq Whisper
+    const text = await transcribeAudio(buffer, "audio.ogg");
+
+    await ctx.reply(`🎤 *Te escuché decir:* "${text}"`, { parse_mode: "Markdown" });
+
+    // Procesarlo con el agente igual que un mensaje de texto
+    const aiResponse = await runAgentLoop(userId, text);
+    await ctx.reply(aiResponse);
+
+  } catch (error: any) {
+    console.error("Audio processing error:", error);
+    await ctx.reply(`❌ Ocurrió un error al procesar tu audio: ${error.message}`);
   }
 });
 
