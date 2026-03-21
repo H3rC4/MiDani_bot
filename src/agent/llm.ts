@@ -2,6 +2,35 @@ import { config } from '../config/env.js';
 import { toolDefinitions } from '../tools/index.js';
 import { Message } from './memory.js';
 
+export async function generateAudio(text: string): Promise<Buffer> {
+  if (!config.ELEVENLABS_API_KEY) throw new Error("Se requiere API Key de ElevenLabs para generar voz.");
+  
+  // "Bella" es una voz femenina predeterminada que funciona excelente en español.
+  const voiceId = "EXAVITQu4vr4xnSDxMaL"; 
+  const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'xi-api-key': config.ELEVENLABS_API_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      text,
+      model_id: 'eleven_multilingual_v2',
+      voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`ElevenLabs Error: ${err}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
 export async function transcribeAudio(audioBuffer: Buffer, filename: string): Promise<string> {
   const isGroq = !!config.GROQ_API_KEY && config.GROQ_API_KEY !== 'SUTITUYE POR EL TUYO';
   if (!isGroq) throw new Error("Se requiere una API Key de Groq para la transcripción de audio.");

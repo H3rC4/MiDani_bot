@@ -1,9 +1,9 @@
-import { Bot } from 'grammy';
+import { Bot, InputFile } from 'grammy';
 import { config } from '../config/env.js';
 import { authMiddleware } from './auth.js';
 import { runAgentLoop } from '../agent/loop.js';
 import { memory } from '../agent/memory.js';
-import { transcribeAudio } from '../agent/llm.js';
+import { transcribeAudio, generateAudio } from '../agent/llm.js';
 
 if (!config.TELEGRAM_BOT_TOKEN || config.TELEGRAM_BOT_TOKEN === 'SUTITUYE POR EL TUYO') {
   console.error("TELEGRAM_BOT_TOKEN is missing or invalid");
@@ -68,6 +68,19 @@ bot.on(["message:voice", "message:audio"], async (ctx) => {
     // Procesarlo con el agente igual que un mensaje de texto
     const aiResponse = await runAgentLoop(userId, text);
     await ctx.reply(aiResponse);
+
+    // Responder con voz si ElevenLabs está configurado
+    if (config.ELEVENLABS_API_KEY) {
+      await ctx.replyWithChatAction("record_voice");
+      try {
+        const audioBuffer = await generateAudio(aiResponse);
+        // Enviamos el audio como "nota de voz"
+        await ctx.replyWithVoice(new InputFile(audioBuffer, "daniela.mp3"));
+      } catch (err: any) {
+        console.error("TTS error:", err);
+        await ctx.reply("❌ Error generando mi voz: " + err.message);
+      }
+    }
 
   } catch (error: any) {
     console.error("Audio processing error:", error);
