@@ -6,16 +6,32 @@ import fs from 'fs';
 // Initialize Firebase Admin only once
 if (getApps().length === 0) {
   try {
-    if (fs.existsSync(config.GOOGLE_APPLICATION_CREDENTIALS)) {
-      const serviceAccount = JSON.parse(fs.readFileSync(config.GOOGLE_APPLICATION_CREDENTIALS, 'utf8'));
+    let serviceAccount;
+    // Soporte para nube (Render): lee el JSON directo de una variable de entorno
+    if (process.env.FIREBASE_JSON) {
+      serviceAccount = JSON.parse(process.env.FIREBASE_JSON);
+    } 
+    // Soporte local: lee el archivo que descargaste
+    else if (fs.existsSync(config.GOOGLE_APPLICATION_CREDENTIALS)) {
+      serviceAccount = JSON.parse(fs.readFileSync(config.GOOGLE_APPLICATION_CREDENTIALS, 'utf8'));
+    }
+
+    if (serviceAccount) {
+      const projectId = serviceAccount.project_id;
+      
+      // La URL por defecto suele ser projectId-default-rtdb o solo projectId
+      // Puedes ajustarla en el .env si Firebase te asigna una URL diferente
+      const databaseURL = process.env.FIREBASE_DATABASE_URL || `https://${projectId}-default-rtdb.firebaseio.com`;
+
       initializeApp({
-        credential: cert(serviceAccount)
+        credential: cert(serviceAccount),
+        databaseURL
       });
     } else {
-      initializeApp(); // Fallback to ADC
+      initializeApp();
     }
   } catch (e) {
-    console.warn("Failed to initialize Firebase with specific credentials, falling back to default.", e);
+    console.warn("Failed to initialize Firebase:", e);
     initializeApp();
   }
 }
