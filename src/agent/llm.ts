@@ -12,7 +12,7 @@ export async function generateAudio(text: string): Promise<Buffer> {
   });
   
   // Une los fragmentos base64 en un gran buffer de audio mp3
-  const buffers = results.map(res => Buffer.from(res.base64, 'base64'));
+  const buffers = results.map((res: any) => Buffer.from(res.base64, 'base64'));
   return Buffer.concat(buffers);
 }
 
