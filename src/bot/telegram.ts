@@ -69,17 +69,15 @@ bot.on(["message:voice", "message:audio"], async (ctx) => {
     const aiResponse = await runAgentLoop(userId, text);
     await ctx.reply(aiResponse);
 
-    // Responder con voz si ElevenLabs está configurado
-    if (config.ELEVENLABS_API_KEY) {
-      await ctx.replyWithChatAction("record_voice");
-      try {
-        const audioBuffer = await generateAudio(aiResponse);
-        // Enviamos el audio como "nota de voz"
-        await ctx.replyWithVoice(new InputFile(audioBuffer, "daniela.mp3"));
-      } catch (err: any) {
-        console.error("TTS error:", err);
-        await ctx.reply("❌ Error generando mi voz: " + err.message);
-      }
+    // Responder siempre con voz usando Google Cloud TTS
+    await ctx.replyWithChatAction("record_voice");
+    try {
+      const audioBuffer = await generateAudio(aiResponse);
+      // Enviamos el audio como "nota de voz"
+      await ctx.replyWithVoice(new InputFile(audioBuffer, "daniela.mp3"));
+    } catch (err: any) {
+      console.error("TTS error:", err);
+      await ctx.reply("❌ Error generando mi voz de Google: " + err.message);
     }
 
   } catch (error: any) {

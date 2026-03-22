@@ -1,34 +1,39 @@
 import { config } from '../config/env.js';
 import { toolDefinitions } from '../tools/index.js';
 import { Message } from './memory.js';
+import textToSpeech from '@google-cloud/text-to-speech';
+import fs from 'fs';
+
+let ttsClient: textToSpeech.TextToSpeechClient;
+try {
+  if (process.env.FIREBASE_JSON) {
+    const credentials = JSON.parse(process.env.FIREBASE_JSON);
+    ttsClient = new textToSpeech.TextToSpeechClient({ credentials });
+  } else if (fs.existsSync(config.GOOGLE_APPLICATION_CREDENTIALS)) {
+    const credentials = JSON.parse(fs.readFileSync(config.GOOGLE_APPLICATION_CREDENTIALS, 'utf8'));
+    ttsClient = new textToSpeech.TextToSpeechClient({ credentials });
+  } else {
+    ttsClient = new textToSpeech.TextToSpeechClient();
+  }
+} catch (e) {
+  console.warn("Failed to initialize Google TTS credentials, falling back.", e);
+  ttsClient = new textToSpeech.TextToSpeechClient();
+}
 
 export async function generateAudio(text: string): Promise<Buffer> {
-  if (!config.ELEVENLABS_API_KEY) throw new Error("Se requiere API Key de ElevenLabs para generar voz.");
-  
-  // "Bella" es una voz femenina predeterminada que funciona excelente en español.
-  const voiceId = "EXAVITQu4vr4xnSDxMaL"; 
-  const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`;
+  const request = {
+    input: { text: text },
+    // Voz neural argentina de mujer
+    voice: { languageCode: 'es-AR', name: 'es-AR-Neural2-A' },
+    audioConfig: { audioEncoding: 'MP3' as const },
+  };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'xi-api-key': config.ELEVENLABS_API_KEY,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      text,
-      model_id: 'eleven_multilingual_v2',
-      voice_settings: { stability: 0.5, similarity_boost: 0.75 }
-    })
-  });
-
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`ElevenLabs Error: ${err}`);
+  const [response] = await ttsClient.synthesizeSpeech(request);
+  if (!response.audioContent) {
+    throw new Error("Google Cloud TTS did not return audioContent");
   }
-
-  const arrayBuffer = await response.arrayBuffer();
-  return Buffer.from(arrayBuffer);
+  
+  return Buffer.from(response.audioContent);
 }
 
 export async function transcribeAudio(audioBuffer: Buffer, filename: string): Promise<string> {
