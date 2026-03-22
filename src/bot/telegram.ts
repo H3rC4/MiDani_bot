@@ -63,13 +63,10 @@ bot.on(["message:voice", "message:audio"], async (ctx) => {
     // Transcribir con Groq Whisper
     const text = await transcribeAudio(buffer, "audio.ogg");
 
-    await ctx.reply(`🎤 *Te escuché decir:* "${text}"`, { parse_mode: "Markdown" });
-
-    // Procesarlo con el agente igual que un mensaje de texto
+    // Procesarlo con el agente
     const aiResponse = await runAgentLoop(userId, text);
-    await ctx.reply(aiResponse);
 
-    // Responder siempre con voz usando Google Cloud TTS
+    // Responder SOLO con voz usando Google Translate
     await ctx.replyWithChatAction("record_voice");
     try {
       const audioBuffer = await generateAudio(aiResponse);
@@ -77,7 +74,9 @@ bot.on(["message:voice", "message:audio"], async (ctx) => {
       await ctx.replyWithVoice(new InputFile(audioBuffer, "daniela.mp3"));
     } catch (err: any) {
       console.error("TTS error:", err);
-      await ctx.reply("❌ Error generando mi voz de Google: " + err.message);
+      await ctx.reply("❌ Error generando mi voz: " + err.message);
+      // Fallback: si falla la voz, enviamos el texto de todos modos
+      await ctx.reply(aiResponse);
     }
 
   } catch (error: any) {
