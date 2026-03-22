@@ -1,39 +1,19 @@
 import { config } from '../config/env.js';
 import { toolDefinitions } from '../tools/index.js';
 import { Message } from './memory.js';
-import textToSpeech from '@google-cloud/text-to-speech';
-import fs from 'fs';
-
-let ttsClient: textToSpeech.TextToSpeechClient;
-try {
-  if (process.env.FIREBASE_JSON) {
-    const credentials = JSON.parse(process.env.FIREBASE_JSON);
-    ttsClient = new textToSpeech.TextToSpeechClient({ credentials });
-  } else if (fs.existsSync(config.GOOGLE_APPLICATION_CREDENTIALS)) {
-    const credentials = JSON.parse(fs.readFileSync(config.GOOGLE_APPLICATION_CREDENTIALS, 'utf8'));
-    ttsClient = new textToSpeech.TextToSpeechClient({ credentials });
-  } else {
-    ttsClient = new textToSpeech.TextToSpeechClient();
-  }
-} catch (e) {
-  console.warn("Failed to initialize Google TTS credentials, falling back.", e);
-  ttsClient = new textToSpeech.TextToSpeechClient();
-}
+import * as googleTTS from 'google-tts-api';
 
 export async function generateAudio(text: string): Promise<Buffer> {
-  const request = {
-    input: { text: text },
-    // Voz neural argentina de mujer
-    voice: { languageCode: 'es-AR', name: 'es-AR-Neural2-A' },
-    audioConfig: { audioEncoding: 'MP3' as const },
-  };
-
-  const [response] = await ttsClient.synthesizeSpeech(request);
-  if (!response.audioContent) {
-    throw new Error("Google Cloud TTS did not return audioContent");
-  }
+  // Transforma el texto largo en pequeños fragmentos base64 usando Google Translate
+  const results = await googleTTS.getAllAudioBase64(text, {
+    lang: 'es',     // Español
+    slow: false,    // Velocidad normal
+    host: 'https://translate.google.com',
+  });
   
-  return Buffer.from(response.audioContent);
+  // Une los fragmentos base64 en un gran buffer de audio mp3
+  const buffers = results.map(res => Buffer.from(res.base64, 'base64'));
+  return Buffer.concat(buffers);
 }
 
 export async function transcribeAudio(audioBuffer: Buffer, filename: string): Promise<string> {
