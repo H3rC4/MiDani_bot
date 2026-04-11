@@ -1,12 +1,14 @@
 {
-  "name": "open-gravity",
+  "name": "midani-bot",
   "version": "1.0.0",
-  "description": "Personal AI agent built from scratch interacting via Telegram",
+  "description": "Personal AI agent (Daniela) built from scratch interacting via Telegram",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js"
+    "build:tsc": "tsc",
+    "start": "node dist/index.js",
+    "set-webhook": "tsx scripts/set-webhook.ts",
+    "delete-webhook": "tsx scripts/delete-webhook.ts"
   },
   "keywords": [],
   "author": "",

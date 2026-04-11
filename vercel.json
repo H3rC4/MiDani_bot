@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/api/webhook", "destination": "/api/webhook" },
+    { "source": "/", "destination": "/public/index.html" }
+  ],
+  "env": {
+    "NODE_OPTIONS": "--no-warnings"
+  }
+}

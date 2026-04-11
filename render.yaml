@@ -2,7 +2,7 @@ services:
   - type: web
     name: daniela-bot
     env: node
-    buildCommand: npm install --include=dev && npm run build
+    buildCommand: npm install --include=dev && npm run build:tsc
     startCommand: npm start
     envVars:
       - key: TELEGRAM_BOT_TOKEN
