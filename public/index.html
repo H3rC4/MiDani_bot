@@ -3,19 +3,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daniela Agent (OpenGravity)</title>
+    <title>Daniela | Tu Asistente Personal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f0f2f5; }
-        .card { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
-        h1 { color: #0088cc; }
-        p { color: #666; }
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Fondo animado */
+        .blobs {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            filter: blur(80px);
+        }
+
+        .blob {
+            position: absolute;
+            background: var(--primary);
+            border-radius: 50%;
+            width: 300px;
+            height: 300px;
+            opacity: 0.2;
+            animation: move 20s infinite alternate;
+        }
+
+        .blob:nth-child(2) {
+            background: var(--secondary);
+            width: 400px;
+            height: 400px;
+            right: 10%;
+            top: 10%;
+            animation-duration: 25s;
+        }
+
+        @keyframes move {
+            from { transform: translate(-10%, -10%); }
+            to { transform: translate(10%, 10%); }
+        }
+
+        .container {
+            width: 90%;
+            max-width: 450px;
+            perspective: 1000px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 3rem 2rem;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            transform-style: preserve-3d;
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .avatar-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1.5rem;
+        }
+
+        .avatar {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.4);
+            position: relative;
+            z-index: 1;
+        }
+
+        .pulse {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: var(--primary);
+            opacity: 0.5;
+            animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(34, 197, 94, 0.1);
+            color: #4ade80;
+            padding: 0.4rem 1rem;
+            border-radius: 99px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #4ade80;
+        }
+
+        p {
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.4);
+        }
+
+        .footer {
+            margin-top: 3rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .footer i {
+            color: var(--secondary);
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Daniela está despierta! 🤖</h1>
-        <p>Tu asistente personal de OpenGravity está funcionando correctamente en Vercel.</p>
-        <p><small>Estado: Activa (Webhook Mode)</small></p>
+    <div class="blobs">
+        <div class="blob"></div>
+        <div class="blob"></div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <div class="avatar-container">
+                <div class="pulse"></div>
+                <div class="avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+            </div>
+
+            <h1>Daniela</h1>
+            <div class="status">
+                <div class="status-dot"></div>
+                En línea
+            </div>
+
+            <p>Tu asistente personal inteligente con voseo rioplatense, lista para ayudarte en Telegram con texto y voz.</p>
+
+            <div class="footer">
+                Desarrollado con <i class="fas fa-heart"></i> por OpenGravity
+            </div>
+        </div>
     </div>
 </body>
 </html>
